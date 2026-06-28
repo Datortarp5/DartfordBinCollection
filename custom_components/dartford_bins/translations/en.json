@@ -1,0 +1,26 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Dartford Bin Collections",
+        "description": "Enter your property details to fetch bin collection dates from Dartford Borough Council.\n\nFind your UPRN at https://www.findmyaddress.co.uk/",
+        "data": {
+          "uprn": "UPRN",
+          "postcode": "Postcode"
+        },
+        "data_description": {
+          "uprn": "Your Unique Property Reference Number (e.g. 10023439372)",
+          "postcode": "Your full postcode (e.g. DA2 7AL)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Dartford Borough Council portal. Check your internet connection.",
+      "invalid_auth": "No bin data returned. Please double-check your UPRN and postcode.",
+      "unknown": "Unexpected error. Check the Home Assistant logs for details."
+    },
+    "abort": {
+      "already_configured": "Dartford Bin Collections is already configured."
+    }
+  }
+}

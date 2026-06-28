@@ -1,0 +1,12 @@
+{
+  "domain": "dartford_bins",
+  "name": "Dartford Bin Collections",
+  "version": "1.0.0",
+  "documentation": "https://github.com/your-repo/dartford-bins-ha",
+  "issue_tracker": "https://github.com/your-repo/dartford-bins-ha/issues",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": ["requests>=2.28.0", "beautifulsoup4>=4.11.0"],
+  "iot_class": "cloud_polling",
+  "config_flow": true
+}
