@@ -18,7 +18,7 @@ Visit [findmyaddress.co.uk](https://www.findmyaddress.co.uk/) and enter your add
 
 ## Sensors
 
-The integration creates one sensor per bin type. As per example:
+The integration creates one sensor per bin type:
 
 | Sensor | Description |
 |--------|-------------|

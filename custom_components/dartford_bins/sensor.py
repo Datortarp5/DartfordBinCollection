@@ -45,6 +45,7 @@ DEFAULT_ICON = "mdi:trash-can-outline"
 
 
 def days_until_label(days: int) -> str:
+    """Return human readable countdown."""
     if days == 0:
         return "Today"
     if days == 1:
@@ -57,25 +58,37 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up sensors — one date + one countdown per bin type found."""
+    """Set up sensors — one date sensor + one countdown sensor per bin type."""
     coordinator: DartfordBinsCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     bin_types = sorted({b["type"].upper() for b in (coordinator.data or [])})
-    _LOGGER.debug("Dartford Bins: found bin types: %s", bin_types)
+    _LOGGER.warning("Dartford Bins: setting up sensors for bin types: %s", bin_types)
 
-    entities: list[SensorEntity] = []
+    entities = []
     for bin_type in bin_types:
-        entities.append(DartfordBinDateSensor(coordinator, bin_type, entry.entry_id))
-        entities.append(DartfordBinCountdownSensor(coordinator, bin_type, entry.entry_id))
+        date_sensor = DartfordBinDateSensor(coordinator, bin_type, entry.entry_id)
+        countdown_sensor = DartfordBinCountdownSensor(coordinator, bin_type, entry.entry_id)
+        entities.append(date_sensor)
+        entities.append(countdown_sensor)
+        _LOGGER.warning(
+            "Dartford Bins: creating sensors '%s' and '%s'",
+            date_sensor.name,
+            countdown_sensor.name,
+        )
 
-    _LOGGER.debug("Dartford Bins: registering %d sensors", len(entities))
+    _LOGGER.warning("Dartford Bins: total sensors to register: %d", len(entities))
     async_add_entities(entities, update_before_add=True)
 
 
 class _DartfordBinBase(CoordinatorEntity, SensorEntity):
     """Shared base for Dartford bin sensors."""
 
-    def __init__(self, coordinator: DartfordBinsCoordinator, bin_type: str, entry_id: str) -> None:
+    def __init__(
+        self,
+        coordinator: DartfordBinsCoordinator,
+        bin_type: str,
+        entry_id: str,
+    ) -> None:
         super().__init__(coordinator)
         self._bin_type = bin_type
         self._entry_id = entry_id
@@ -86,6 +99,7 @@ class _DartfordBinBase(CoordinatorEntity, SensorEntity):
         self._color = cfg.get("color", "#607d8b")
 
     def _next_date(self) -> date | None:
+        """Return nearest upcoming collection date for this bin type."""
         bins = self.coordinator.data or []
         today = datetime.now().date()
         dates = []
@@ -100,6 +114,7 @@ class _DartfordBinBase(CoordinatorEntity, SensorEntity):
         return min(dates) if dates else None
 
     def _upcoming_dates(self) -> list[str]:
+        """Return all upcoming collection dates for this bin type."""
         bins = self.coordinator.data or []
         today = datetime.now().date()
         result = []
@@ -124,12 +139,15 @@ class _DartfordBinBase(CoordinatorEntity, SensorEntity):
 
 
 class DartfordBinDateSensor(_DartfordBinBase):
-    """Next collection date for a bin type. State: DD/MM/YYYY."""
+    """
+    Shows the next collection date for a bin type.
+    State: DD/MM/YYYY
+    """
 
-    def __init__(self, coordinator, bin_type, entry_id):
+    def __init__(self, coordinator: DartfordBinsCoordinator, bin_type: str, entry_id: str) -> None:
         super().__init__(coordinator, bin_type, entry_id)
         self._attr_name = f"Dartford {self._friendly} Next Collection"
-        self._attr_unique_id = f"dartford_bins_{entry_id}_{bin_type.lower()}_date"
+        self._attr_unique_id = f"{DOMAIN}_{entry_id}_{bin_type.lower()}_date"
 
     @property
     def native_value(self) -> str | None:
@@ -146,12 +164,15 @@ class DartfordBinDateSensor(_DartfordBinBase):
 
 
 class DartfordBinCountdownSensor(_DartfordBinBase):
-    """Countdown to next collection. State: Today / Tomorrow / In N days."""
+    """
+    Shows how many days until the next collection.
+    State: Today / Tomorrow / In N days
+    """
 
-    def __init__(self, coordinator, bin_type, entry_id):
+    def __init__(self, coordinator: DartfordBinsCoordinator, bin_type: str, entry_id: str) -> None:
         super().__init__(coordinator, bin_type, entry_id)
         self._attr_name = f"Dartford {self._friendly} Collection Countdown"
-        self._attr_unique_id = f"dartford_bins_{entry_id}_{bin_type.lower()}_countdown"
+        self._attr_unique_id = f"{DOMAIN}_{entry_id}_{bin_type.lower()}_countdown"
 
     @property
     def native_value(self) -> str | None:
