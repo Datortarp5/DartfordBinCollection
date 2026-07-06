@@ -9,8 +9,8 @@
           "postcode": "Postcode"
         },
         "data_description": {
-          "uprn": "Your Unique Property Reference Number (e.g. 10023439372)",
-          "postcode": "Your full postcode (e.g. DA2 7AL)"
+          "uprn": "Your Unique Property Reference Number (e.g. 10000000000)",
+          "postcode": "Your full postcode (e.g. DA1 1AA)"
         }
       }
     },
