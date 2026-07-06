@@ -6,11 +6,13 @@
         "description": "Enter your property details to fetch bin collection dates from Dartford Borough Council.\n\nFind your UPRN at https://www.findmyaddress.co.uk/",
         "data": {
           "uprn": "UPRN",
-          "postcode": "Postcode"
+          "postcode": "Postcode",
+          "refresh_interval": "Refresh interval"
         },
         "data_description": {
           "uprn": "Your Unique Property Reference Number (e.g. 10000000000)",
-          "postcode": "Your full postcode (e.g. DA1 1AA)"
+          "postcode": "Your full Dartford postcode (e.g. DA1 1AA)",
+          "refresh_interval": "How often to check the council website for updated collection dates"
         }
       }
     },
@@ -21,6 +23,19 @@
     },
     "abort": {
       "already_configured": "Dartford Bin Collections is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Dartford Bin Collections Options",
+        "data": {
+          "refresh_interval": "Refresh interval"
+        },
+        "data_description": {
+          "refresh_interval": "How often to check the council website for updated collection dates"
+        }
+      }
     }
   }
 }

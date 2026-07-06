@@ -11,13 +11,13 @@ from bs4 import BeautifulSoup
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.http import StaticPathConfig
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "dartford_bins"
 PLATFORMS = [Platform.SENSOR]
-SCAN_INTERVAL = timedelta(hours=12)
 
 BASE_URL = "https://windmz.dartford.gov.uk/ufs/WS_CHECK_COLLECTIONS.eb"
 HEADERS = {
@@ -36,7 +36,7 @@ def fetch_bin_data(uprn: str, postcode: str) -> list[dict]:
     """
     Fetch bin collection data from Dartford Borough Council portal.
 
-    The Verj.io e-form requires a two-step session flow:
+    Two-step session flow:
       1. GET the UPRN URL to get a JSESSIONID cookie and ebz token.
       2. POST the postcode within the same session to retrieve results.
     """
@@ -73,7 +73,6 @@ def fetch_bin_data(uprn: str, postcode: str) -> list[dict]:
 
     soup2 = BeautifulSoup(r2.text, "html.parser")
 
-    # Step 3: Parse the results table
     table = soup2.find(
         "table", {"class": lambda c: c and "eb-EVDNdR1G-tableContent" in c}
     )
@@ -102,17 +101,37 @@ def fetch_bin_data(uprn: str, postcode: str) -> list[dict]:
     return bins
 
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Register static www path for bin icons."""
+    import pathlib
+    www_path = pathlib.Path(__file__).parent / "www"
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig("/local/dartford_bins", str(www_path), cache_headers=True)]
+    )
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Dartford Bins from a config entry."""
     uprn = entry.data["uprn"]
     postcode = entry.data["postcode"]
 
-    coordinator = DartfordBinsCoordinator(hass, uprn, postcode)
+    # Refresh interval: options take priority over initial config data, default 12h
+    refresh_hours = entry.options.get(
+        "refresh_interval",
+        entry.data.get("refresh_interval", 12)
+    )
+
+    coordinator = DartfordBinsCoordinator(hass, uprn, postcode, refresh_hours)
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Reload entry when options are updated so new interval takes effect
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+
     return True
 
 
@@ -124,19 +143,30 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload the entry when options change."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 class DartfordBinsCoordinator(DataUpdateCoordinator):
     """Coordinator to fetch bin data on a schedule."""
 
-    def __init__(self, hass: HomeAssistant, uprn: str, postcode: str) -> None:
-        """Initialise the coordinator."""
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        uprn: str,
+        postcode: str,
+        refresh_hours: int = 12,
+    ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=SCAN_INTERVAL,
+            update_interval=timedelta(hours=refresh_hours),
         )
         self.uprn = uprn
         self.postcode = postcode
+        _LOGGER.debug("Dartford Bins: refresh interval set to %s hours", refresh_hours)
 
     async def _async_update_data(self) -> list[dict]:
         """Fetch data from Dartford portal."""

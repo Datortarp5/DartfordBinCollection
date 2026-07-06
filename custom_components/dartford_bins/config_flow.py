@@ -14,10 +14,24 @@ from . import fetch_bin_data, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+REFRESH_OPTIONS = {
+    6:  "Every 6 hours",
+    12: "Every 12 hours (recommended)",
+    24: "Every 24 hours",
+    48: "Every 48 hours",
+}
+
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("uprn", description={"suggested_value": ""}): str,
-        vol.Required("postcode", description={"suggested_value": ""}): str,
+        vol.Required("uprn", description={"suggested_value": "10000000000"}): str,
+        vol.Required("postcode", description={"suggested_value": "DA1 1AA"}): str,
+        vol.Required("refresh_interval", default=12): vol.In(REFRESH_OPTIONS),
+    }
+)
+
+OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Required("refresh_interval", default=12): vol.In(REFRESH_OPTIONS),
     }
 )
 
@@ -58,7 +72,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected exception during Dartford config validation")
                 errors["base"] = "unknown"
             else:
-                # Normalise the stored values
                 user_input["uprn"] = user_input["uprn"].strip()
                 user_input["postcode"] = user_input["postcode"].strip().upper()
                 return self.async_create_entry(title=info["title"], data=user_input)
@@ -69,13 +82,44 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
             description_placeholders={
                 "uprn_help": "Find your UPRN at https://www.findmyaddress.co.uk/",
-                "postcode_help": "Your full postcode, e.g. DA2 7AL",
+                "postcode_help": "Your full Dartford postcode, e.g. DA1 1AA",
             },
         )
+
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        """Return the options flow handler."""
+        return DartfordBinsOptionsFlow(config_entry)
 
     async def async_step_reconfigure(self, user_input: dict | None = None) -> FlowResult:
         """Handle reconfiguration."""
         return await self.async_step_user(user_input)
+
+
+class DartfordBinsOptionsFlow(config_entries.OptionsFlow):
+    """Handle options — lets user change refresh interval after setup."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        self._config_entry = config_entry
+
+    async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current_interval = self._config_entry.options.get(
+            "refresh_interval",
+            self._config_entry.data.get("refresh_interval", 12)
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("refresh_interval", default=current_interval): vol.In(REFRESH_OPTIONS),
+                }
+            ),
+        )
 
 
 class CannotConnect(HomeAssistantError):
