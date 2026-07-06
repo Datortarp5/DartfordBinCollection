@@ -1,9 +1,9 @@
 {
   "domain": "dartford_bins",
   "name": "Dartford Bin Collections",
-  "version": "1.0.0",
-  "documentation": "https://github.com/your-repo/dartford-bins-ha",
-  "issue_tracker": "https://github.com/your-repo/dartford-bins-ha/issues",
+  "version": "1.1.0",
+  "documentation": "https://github.com/Datortarp5/DartfordBinCollections",
+  "issue_tracker": "https://github.com/Datortarp5/DartfordBinCollections/issues",
   "dependencies": [],
   "codeowners": [],
   "requirements": ["requests>=2.28.0", "beautifulsoup4>=4.11.0"],

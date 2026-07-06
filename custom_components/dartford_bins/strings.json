@@ -12,14 +12,14 @@
         "data_description": {
           "uprn": "Your Unique Property Reference Number (e.g. 10000000000)",
           "postcode": "Your full Dartford postcode (e.g. DA1 1AA)",
-          "refresh_interval": "How often to check the council website for updated collection dates"
+          "refresh_interval": "How often to check the council website for updated dates"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to Dartford Borough Council portal. Check your internet connection.",
-      "invalid_auth": "No bin data returned. Please double-check your UPRN and postcode.",
-      "unknown": "Unexpected error. Check the Home Assistant logs for details."
+      "cannot_connect": "Failed to connect to Dartford Borough Council portal.",
+      "invalid_input": "No bin data returned — please check your UPRN and postcode.",
+      "unknown": "Unexpected error — check the Home Assistant logs."
     },
     "abort": {
       "already_configured": "Dartford Bin Collections is already configured."
@@ -33,7 +33,7 @@
           "refresh_interval": "Refresh interval"
         },
         "data_description": {
-          "refresh_interval": "How often to check the council website for updated collection dates"
+          "refresh_interval": "How often to check the council website for updated dates"
         }
       }
     }
